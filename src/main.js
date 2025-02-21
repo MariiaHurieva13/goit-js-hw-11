@@ -1,62 +1,29 @@
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
-import { getImg } from "./js/pixabay-api";
-import { ShowGLR } from "./js/render-functions";
+import fetchImages from './js/pickabay-api';
+import { hideLoader, renderImages, showLoader, showMessage } from './js/render-functions';
 
-export const form = document.querySelector(".form");
-const input = document.querySelector(".input-search");
-//const btn = document.querySelector(".search-btn");
-const waitMsg = document.querySelector(".wait-msg");
+const form = document.querySelector('form');
+const input = document.querySelector('#search-text');
 
+form.addEventListener('submit', handleSubmit);
 
-
-
-form.addEventListener("submit", (e) => {
+function handleSubmit(e) {
   e.preventDefault();
-  
-  document.querySelector(".gallery").innerHTML = '';
 
-  let searchName = input.value.trim();
-  
-  if (!searchName) {
-    iziToast.show ({
-      backgroundColor: 'rgba(239, 64, 64, 1)',
-      messageColor: `rgba(255, 255, 255, 1)`,
-      close: `true`,
-      position: "topRight",
-      title: 'Error',
-      titleColor: '#fff',
-      titleSize: '16px',
-      message: 'Input search string'
-  });
-  return
-  }
-  waitMsg.innerHTML = '"Wait, the image is loaded" <span class="loader"></span>'
-  getImg(searchName)
-    .then(response => {
-      if (response.data.hits.length == 0) {
-        iziToast.show ({
-          backgroundColor: 'rgba(239, 64, 64, 1)',
-          messageColor: `rgba(255, 255, 255, 1)`,
-          close: `true`,
-          position: "topRight",
-          title: 'Error',
-          titleColor: '#fff',
-          titleSize: '16px',
-          message: 'Sorry, there are no images matching your search query. Please try again!'
-      });
-    } else {
-      ShowGLR (response.data.hits,);
-    }
-    waitMsg.textContent = "";
-  
-  })
+  const searchText = input.value;
 
-    .catch(error => {
-      waitMsg.textContent = 'Ups ...';
-      console.log(error);
-  })
-  
-  form.reset()
+  if (!searchText) return;
 
-});
+  input.value = '';
+
+  showLoader()
+
+  fetchImages(searchText)
+    .then(data => handleSearchResults(data.data.hits))
+    .catch(err => console.log(err));
+}
+
+function handleSearchResults(images) {
+  if (!images.length) showMessage();
+
+  renderImages(images);
+}
